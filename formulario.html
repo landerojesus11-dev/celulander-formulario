@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulario de Crédito</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #1e293b;
+    padding: 32px 24px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  h1 { font-size: 20px; margin: 0 0 20px; text-align: center; }
+  label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; margin-top: 16px; }
+  input {
+    width: 100%; padding: 12px; border-radius: 10px;
+    border: 1px solid #334155; background: #0f172a; color: #f1f5f9; font-size: 16px;
+  }
+  input:focus { outline: none; border-color: #38bdf8; }
+  button {
+    width: 100%; margin-top: 24px; padding: 14px; border: none; border-radius: 10px;
+    background: #38bdf8; color: #0f172a; font-size: 16px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: 0.6; }
+  button:active { background: #0ea5e9; }
+  .mensaje { margin-top: 14px; font-size: 13px; text-align: center; }
+  .mensaje.error { color: #f87171; }
+  .mensaje.ok { color: #4ade80; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Datos de la solicitud</h1>
+    <form id="miFormulario">
+      <label for="valorCompra">Valor de compra</label>
+      <input type="number" id="valorCompra" name="valorCompra" placeholder="Ej: 850000" required inputmode="numeric">
+
+      <label for="cedula">Cédula</label>
+      <input type="text" id="cedula" name="cedula" placeholder="Ej: 1017123456" required inputmode="numeric">
+
+      <button type="submit" id="btnEnviar">Enviar</button>
+      <div id="mensaje" class="mensaje"></div>
+    </form>
+  </div>
+
+<script>
+  const URL_WORKER = "https://celulandero-relay-worker.landerojesus11.workers.dev";
+
+  const form = document.getElementById('miFormulario');
+  const btn = document.getElementById('btnEnviar');
+  const mensaje = document.getElementById('mensaje');
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const valorCompra = document.getElementById('valorCompra').value.trim();
+    const cedula = document.getElementById('cedula').value.trim();
+
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    mensaje.textContent = "";
+    mensaje.className = "mensaje";
+
+    try {
+      const res = await fetch(URL_WORKER + "/guardar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ valorCompra, cedula })
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Error al guardar");
+
+      mensaje.textContent = "✔ Guardado correctamente";
+      mensaje.className = "mensaje ok";
+      form.reset();
+
+      // Después de guardar, llevamos a resultado.html con los mismos datos
+      setTimeout(() => {
+        const params = new URLSearchParams({ valorCompra, cedula });
+        window.location.href = 'resultado.html?' + params.toString();
+      }, 800);
+
+    } catch (err) {
+      mensaje.textContent = "✖ " + err.message;
+      mensaje.className = "mensaje error";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Enviar";
+    }
+  });
+</script>
+</body>
+</html>
